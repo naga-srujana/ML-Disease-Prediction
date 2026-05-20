@@ -1,0 +1,83 @@
+{
+  "symptoms": [
+    "cough",
+    "chills",
+    "fatigue",
+    "body_aches"
+  ],
+  "models": {
+    "Random Forest": {
+      "disease": "Influenza",
+      "confidence": 44.0,
+      "accuracy": 100.0,
+      "precision": 100.0,
+      "recall": 100.0,
+      "f1": 100.0,
+      "alternatives": [
+        {
+          "disease": "Allergy",
+          "confidence": 13.0
+        },
+        {
+          "disease": "Bronchial Asthma",
+          "confidence": 13.0
+        },
+        {
+          "disease": "Pneumonia",
+          "confidence": 9.0
+        },
+        {
+          "disease": "GERD",
+          "confidence": 6.0
+        }
+      ]
+    },
+    "Decision Tree": {
+      "disease": "Influenza",
+      "confidence": 100.0,
+      "accuracy": 96.0,
+      "precision": 96.4,
+      "recall": 96.0,
+      "f1": 96.0,
+      "alternatives": []
+    },
+    "SVM": {
+      "disease": "Allergy",
+      "confidence": 7.7,
+      "accuracy": 100.0,
+      "precision": 100.0,
+      "recall": 100.0,
+      "f1": 100.0,
+      "alternatives": [
+        {
+          "disease": "Bronchial Asthma",
+          "confidence": 6.6
+        },
+        {
+          "disease": "Drug Reaction",
+          "confidence": 4.8
+        },
+        {
+          "disease": "GERD",
+          "confidence": 4.7
+        },
+        {
+          "disease": "Influenza",
+          "confidence": 4.2
+        }
+      ]
+    },
+    "Naive Bayes": {
+      "disease": "Influenza",
+      "confidence": 100.0,
+      "accuracy": 100.0,
+      "precision": 100.0,
+      "recall": 100.0,
+      "f1": 100.0,
+      "alternatives": []
+    }
+  },
+  "consensus": "Influenza",
+  "all_agree": false,
+  "model_count": 4
+}
