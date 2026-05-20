@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Disease Prediction System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+  :root {
+    --bg:       #f4f8fb;
+    --surface:  #ffffff;
+    --card:     #ffffff;
+    --border:   rgba(0,0,0,0.08);
+    --border2:  rgba(0,0,0,0.15);
+    --text:     #1f2937;
+    --muted:    #6b7280;
+    --hint:     #94a3b8;
+    --green:    #22c987;
+    --green-bg: rgba(34,201,135,0.08);
+    --green-bd: rgba(34,201,135,0.25);
+    --amber:    #f5a623;
+    --amber-bg: rgba(245,166,35,0.08);
+    --amber-bd: rgba(245,166,35,0.25);
+    --red:      #f05b5b;
+    --red-bg:   rgba(240,91,91,0.08);
+    --blue:     #4e9eff;
+    --blue-bg:  rgba(78,158,255,0.08);
+    --radius:   14px;
+    --radius-sm:8px;
+    --font:     'DM Sans', sans-serif;
+    --serif:    'DM Serif Display', serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+  }
+
+  .container { max-width: 760px; margin: 0 auto; }
+
+  /* ── Header ── */
+  .header {
+    display: flex; align-items: center; gap: 16px;
+    margin-bottom: 28px;
+    padding: 20px 24px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    animation: fadeDown .5s ease both;
+  }
+  .logo {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: var(--green-bg); border: 1px solid var(--green-bd);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; color: var(--green); flex-shrink: 0;
+  }
+  .header-text h1 { font-family: var(--serif); font-size: 22px; font-weight: 400; color: var(--text); }
+  .header-text p  { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .status-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--green); margin-left: auto; flex-shrink: 0;
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s ease infinite;
+  }
+
+  /* ── Loading / Error states ── */
+  #loading-state, #error-state {
+    text-align: center; padding: 60px 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); margin-bottom: 16px;
+    animation: fadeUp .5s ease both;
+  }
+  #loading-state i, #error-state i { font-size: 40px; margin-bottom: 16px; display: block; }
+  #loading-state i { color: var(--green); animation: spin 1.2s linear infinite; }
+  #error-state  i { color: var(--amber); }
+  #loading-state p, #error-state p { color: var(--muted); font-size: 14px; line-height: 1.6; }
+  #error-state h3 { color: var(--text); font-size: 16px; margin-bottom: 8px; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 22px; margin-bottom: 14px;
+    animation: fadeUp .5s ease both;
+  }
+  .card:nth-child(2) { animation-delay:.05s }
+  .card:nth-child(3) { animation-delay:.1s  }
+  .card:nth-child(4) { animation-delay:.15s }
+  .card:nth-child(5) { animation-delay:.2s  }
+  .card:nth-child(6) { animation-delay:.25s }
+
+  /* ── Section labels ── */
+  .sec-label {
+    font-size: 11px; font-weight: 500; color: var(--hint);
+    text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px;
+  }
+
+  /* ── Symptom chips ── */
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; padding: 5px 11px; border-radius: 99px;
+    background: rgba(255,255,255,0.04); border: 1px solid var(--border2);
+    color: var(--muted);
+  }
+  .chip i { font-size: 12px; color: var(--green); }
+
+  /* ── Model tabs ── */
+  .model-tabs { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin-bottom: 18px; }
+  .mtab {
+    padding: 9px 6px; font-size: 12px; font-weight: 500; text-align: center;
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    cursor: pointer; background: transparent; color: var(--muted);
+    transition: all .2s; font-family: var(--font);
+  }
+  .mtab:hover { border-color: var(--border2); color: var(--text); background: rgba(255,255,255,0.04); }
+  .mtab.active {
+    background: var(--green-bg); border-color: var(--green-bd);
+    color: var(--green);
+  }
+
+  /* ── Disease name ── */
+  .disease-block { margin-bottom: 16px; }
+  .disease-name { font-family: var(--serif); font-size: 28px; font-weight: 400; color: var(--text); margin-bottom: 4px; }
+  .disease-meta { font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 99px;
+  }
+  .badge-green { background: var(--green-bg); color: var(--green); border: 1px solid var(--green-bd); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); border: 1px solid var(--amber-bd); }
+
+  /* ── Confidence bar ── */
+  .conf-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .conf-val  { font-size: 12px; color: var(--text); font-weight: 500; }
+  .track { height: 7px; background: rgba(255,255,255,0.06); border-radius: 99px; overflow: hidden; margin-bottom: 18px; }
+  .fill  { height: 100%; border-radius: 99px; background: var(--green); transition: width .5s cubic-bezier(.4,0,.2,1); }
+
+  /* ── Metrics ── */
+  .metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; }
+  .mbox { background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; }
+  .mval { font-size: 20px; font-weight: 500; color: var(--green); }
+  .mlbl { font-size: 11px; color: var(--hint); margin-top: 2px; }
+
+  /* ── Alternatives ── */
+  .alt-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid var(--border);
+    transition: opacity .3s;
+  }
+  .alt-row:last-child { border: none; padding-bottom: 0; }
+  .alt-name { font-size: 13px; color: var(--text); flex: 1; min-width: 0; }
+  .alt-track { width: 90px; height: 4px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; flex-shrink: 0; }
+  .alt-fill  { height: 100%; border-radius: 3px; background: var(--hint); transition: width .5s; }
+  .alt-pct   { font-size: 12px; color: var(--muted); min-width: 34px; text-align: right; }
+
+  /* ── Causes ── */
+  .cause-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+  .cause-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 14px; background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+  }
+  .cause-icon {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: var(--amber-bg); border: 1px solid var(--amber-bd);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--amber); font-size: 15px; flex-shrink: 0; margin-top: 1px;
+  }
+  .cause-title { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+  .cause-desc  { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+  /* ── AI Tips ── */
+  .tip-list { display: flex; flex-direction: column; gap: 10px; }
+  .tip-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 14px; background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border); border-radius: var(--radius-sm);
+    border-left: 2px solid var(--green);
+  }
+  .tip-icon { color: var(--green); font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+  .tip-text { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+  .tip-sub  { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* ── AI label ── */
+  .ai-label {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--blue); background: var(--blue-bg);
+    border: 1px solid rgba(78,158,255,0.2); border-radius: 99px;
+    padding: 3px 10px; margin-bottom: 14px; font-weight: 500;
+  }
+
+  /* ── Warning ── */
+  .warn {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 16px; background: var(--amber-bg);
+    border: 1px solid var(--amber-bd); border-radius: var(--radius-sm);
+    margin-bottom: 14px;
+  }
+  .warn i    { color: var(--amber); font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .warn span { font-size: 12px; color: var(--amber); line-height: 1.6; }
+
+  /* ── Animations ── */
+  @keyframes fadeDown { from { opacity:0; transform:translateY(-12px) } to { opacity:1; transform:none } }
+  @keyframes fadeUp   { from { opacity:0; transform:translateY(12px)  } to { opacity:1; transform:none } }
+  @keyframes spin     { to { transform: rotate(360deg) } }
+  @keyframes pulse    { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* ── Responsive ── */
+  @media(max-width:500px) {
+    .model-tabs { grid-template-columns: repeat(2,1fr); }
+    .metrics    { grid-template-columns: repeat(2,1fr); }
+    .cause-grid { grid-template-columns: 1fr; }
+    .disease-name { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo"><i class="ti ti-stethoscope"></i></div>
+    <div class="header-text">
+      <h1>Disease Prediction System</h1>
+      <p id="header-sub">Loading results...</p>
+    </div>
+    <div class="status-dot"></div>
+  </div>
+
+  <!-- Loading -->
+  <div id="loading-state" class="card">
+    <i class="ti ti-loader-2"></i>
+    <p>Reading result.json...<br>Make sure you ran <code>python predict.py</code> first.</p>
+  </div>
+
+  <!-- Error -->
+  <div id="error-state" class="card" style="display:none">
+    <i class="ti ti-alert-triangle"></i>
+    <h3>result.json not found</h3>
+    <p style="margin-top:8px">
+      Steps to fix:<br><br>
+      1. Run &nbsp;<code>python train_model.py</code><br>
+      2. Run &nbsp;<code>python predict.py</code><br>
+      3. Then refresh this page.
+    </p>
+  </div>
+
+  <!-- Main UI (hidden until data loads) -->
+  <div id="main-ui" style="display:none">
+
+    
+    <!-- Symptom Input -->
+    <div class="card">
+      <div class="sec-label">Enter Symptoms</div>
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <input id="symptom-input" type="text" placeholder="Example: fever, headache, cough"
+        style="padding:14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;width:100%;outline:none;background:#ffffff;color:#111827">
+
+        <select id="symptom-select"
+        style="padding:14px;border-radius:10px;border:1px solid #cbd5e1;font-size:14px;background:#ffffff;color:#111827">
+          <option value="">Choose Common Symptoms</option>
+          <option>Fever</option>
+          <option>Headache</option>
+          <option>Cough</option>
+          <option>Vomiting</option>
+          <option>Fatigue</option>
+          <option>Cold</option>
+          <option>Body Pain</option>
+        </select>
+
+        <button id="generate-btn"
+        style="padding:14px;border:none;border-radius:10px;background:#22c987;color:white;font-size:15px;font-weight:600;cursor:pointer">
+        Generate Results
+        </button>
+      </div>
+    </div>
+
+
+    <!-- Symptoms -->
+    <div class="card">
+      <div class="sec-label">Symptoms entered</div>
+      <div class="chip-row" id="symptom-chips"></div>
+    </div>
+
+    <!-- Prediction -->
+    <div class="card">
+      <div class="sec-label">Select model to compare</div>
+      <div class="model-tabs" id="model-tabs"></div>
+
+      <div class="disease-block">
+        <div class="disease-name" id="dis-name"></div>
+        <div class="disease-meta">
+          <span id="model-label"></span>
+          <span id="agree-badge" class="badge badge-green"><i class="ti ti-check"></i> all 4 models agree</span>
+        </div>
+      </div>
+
+      <div class="conf-row">
+        <span>Confidence</span>
+        <span class="conf-val" id="conf-val"></span>
+      </div>
+      <div class="track"><div class="fill" id="conf-fill"></div></div>
+
+      <div class="metrics" id="metrics-grid"></div>
+    </div>
+
+    <!-- Alternatives -->
+    <div class="card">
+      <div class="sec-label">Other possibilities from this model</div>
+      <div id="alt-list"></div>
+    </div>
+
+    <!-- Causes -->
+    <div class="card">
+      <div class="sec-label" id="causes-label">Causes</div>
+      <div class="cause-grid" id="causes-grid"></div>
+    </div>
+
+    <!-- AI Tips -->
+    <div class="card">
+      <div class="ai-label"><i class="ti ti-sparkles"></i> AI recovery suggestions</div>
+      <div class="tip-list" id="tips-list"></div>
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="warn">
+      <i class="ti ti-shield-exclamation"></i>
+      <span>This is <strong>not</strong> a medical diagnosis. AI suggestions are general wellness guidance only. Please consult a licensed doctor for clinical advice and treatment.</span>
+    </div>
+
+  </div><!-- /#main-ui -->
+</div><!-- /.container -->
+
+<script>
+/* ── Knowledge base: causes + tips per disease ── */
+const KB = {
+  default: {
+    causes:[
+      {icon:'ti-virus',      title:'Infectious agent',    desc:'Bacteria, virus or fungus entering the body and triggering an immune response'},
+      {icon:'ti-shield-off', title:'Weakened immunity',   desc:'Poor sleep, stress or underlying conditions reducing the body\'s natural defences'},
+      {icon:'ti-users',      title:'Person-to-person',    desc:'Close contact with infected individuals in crowded or enclosed spaces'},
+      {icon:'ti-dna',        title:'Genetic predisposition', desc:'Family history or inherited traits that increase susceptibility to certain diseases'},
+    ],
+    tips:[
+      {icon:'ti-droplet',      text:'Stay hydrated',          sub:'Drink 8–10 glasses of water or clear fluids daily to support recovery.'},
+      {icon:'ti-bed',          text:'Rest adequately',        sub:'Give your body time to heal. Aim for 8–9 hours of sleep each night.'},
+      {icon:'ti-pill',         text:'Take prescribed medicine',sub:'Follow your doctor\'s prescription. Do not self-medicate or skip doses.'},
+      {icon:'ti-apple',        text:'Eat nutritious food',    sub:'Light meals rich in vitamins, minerals and protein support immune recovery.'},
+      {icon:'ti-alert-circle', text:'Seek medical attention', sub:'If symptoms persist beyond 5 days or worsen suddenly, see a doctor immediately.'},
+    ]
+  },
+  'Influenza':{
+    causes:[
+      {icon:'ti-virus',      title:'Influenza virus (Type A/B)', desc:'Highly contagious flu viruses spread through droplets when infected people cough or sneeze'},
+      {icon:'ti-users',      title:'Close contact',              desc:'Being near infected individuals in offices, schools or public transport'},
+      {icon:'ti-shield-off', title:'Low immunity',               desc:'Stress, poor nutrition or chronic illness reduces resistance to the flu virus'},
+      {icon:'ti-snowflake',  title:'Seasonal patterns',          desc:'Cold dry air in winter helps the flu virus survive longer outside the body'},
+    ],
+    tips:[
+      {icon:'ti-droplet',      text:'Drink plenty of fluids',       sub:'Water, herbal teas and clear soups prevent dehydration caused by fever and sweating.'},
+      {icon:'ti-bed',          text:'Stay home and rest for 5+ days',sub:'Avoid work or school until fever-free for 24 hours. Rest speeds recovery significantly.'},
+      {icon:'ti-pill',         text:'Use fever reducers if needed',  sub:'Paracetamol or ibuprofen reduces fever and body aches. Follow dosage instructions carefully.'},
+      {icon:'ti-apple',        text:'Eat light Vitamin C-rich foods',sub:'Citrus fruits, soups and warm meals help restore energy and strengthen immunity.'},
+      {icon:'ti-alert-circle', text:'See a doctor if breathing is hard',sub:'Difficulty breathing, chest pain or confusion require immediate emergency attention.'},
+    ]
+  },
+  'Common Cold':{
+    causes:[
+      {icon:'ti-virus',      title:'Rhinovirus',        desc:'Over 200 virus strains, with rhinovirus being the most common cause of the common cold'},
+      {icon:'ti-hand-stop',  title:'Touch transmission',desc:'Touching contaminated surfaces and then your eyes, nose or mouth transfers the virus'},
+      {icon:'ti-shield-off', title:'Low immunity',      desc:'Fatigue, stress or poor diet lowers your body\'s defence against cold viruses'},
+      {icon:'ti-building',   title:'Poor ventilation',  desc:'Enclosed poorly-ventilated spaces allow airborne virus particles to accumulate'},
+    ],
+    tips:[
+      {icon:'ti-droplet',    text:'Stay hydrated',           sub:'Warm water, herbal teas and clear broths soothe the throat and ease congestion.'},
+      {icon:'ti-bed',        text:'Get extra sleep',         sub:'Your body repairs faster during sleep — aim for 8–9 hours until symptoms clear.'},
+      {icon:'ti-salt',       text:'Gargle with salt water',  sub:'Mix ¼ tsp salt in warm water and gargle twice daily to relieve a sore throat.'},
+      {icon:'ti-temperature',text:'Use steam inhalation',    sub:'Breathing steam from a bowl of hot water loosens nasal congestion effectively.'},
+      {icon:'ti-alert-circle',text:'Avoid spreading it',    sub:'Cover coughs, wash hands often and stay home to protect those around you.'},
+    ]
+  },
+  'Malaria':{
+    causes:[
+      {icon:'ti-bug',        title:'Plasmodium parasite',  desc:'A parasite transmitted through the bite of infected female Anopheles mosquitoes'},
+      {icon:'ti-droplet',    title:'Stagnant water',       desc:'Mosquitoes breed in stagnant water near homes, increasing transmission risk'},
+      {icon:'ti-map',        title:'Travel to endemic area',desc:'Visiting tropical or subtropical regions with active malaria transmission'},
+      {icon:'ti-shield-off', title:'No preventive measures',desc:'Not using bed nets, repellents or prophylactic medication increases exposure risk'},
+    ],
+    tips:[
+      {icon:'ti-pill',         text:'Take antimalarial drugs as prescribed',sub:'Complete the full course of treatment even if symptoms improve early.'},
+      {icon:'ti-droplet',      text:'Stay hydrated',                        sub:'High fever causes significant fluid loss. Drink water and oral rehydration salts.'},
+      {icon:'ti-bed',          text:'Absolute bed rest',                    sub:'Malaria is severe — avoid any physical exertion during the infection period.'},
+      {icon:'ti-thermometer',  text:'Monitor fever closely',                sub:'Track temperature every 4–6 hours. Go to hospital if fever exceeds 39.5°C.'},
+      {icon:'ti-alert-circle', text:'Hospitalisation may be required',      sub:'Severe malaria with confusion or convulsions is a medical emergency.'},
+    ]
+  },
+  'Dengue':{
+    causes:[
+      {icon:'ti-bug',        title:'Aedes mosquito bite', desc:'The Aedes aegypti mosquito carries dengue virus and bites primarily during the day'},
+      {icon:'ti-droplet',    title:'Stagnant water',      desc:'Flower pots, tyres and containers holding still water are mosquito breeding grounds'},
+      {icon:'ti-sun',        title:'Tropical climate',    desc:'Warm humid climates in tropical and subtropical regions favour mosquito breeding'},
+      {icon:'ti-map',        title:'Urban crowding',      desc:'Dense urban areas with poor sanitation increase mosquito population and spread'},
+    ],
+    tips:[
+      {icon:'ti-droplet',      text:'Aggressive hydration',          sub:'Dengue depletes fluids fast. Drink at least 3 litres of water or ORS daily.'},
+      {icon:'ti-bed',          text:'Complete bed rest',             sub:'Avoid all physical activity. Dengue causes extreme fatigue and internal inflammation.'},
+      {icon:'ti-pill',         text:'Use only paracetamol for fever',sub:'NEVER take aspirin or ibuprofen — they thin the blood and worsen bleeding risk.'},
+      {icon:'ti-activity',     text:'Monitor platelet count daily',  sub:'Get a blood test every 24 hours. Platelets below 50,000 requires hospitalisation.'},
+      {icon:'ti-alert-circle', text:'Watch for warning signs',       sub:'Severe abdominal pain, vomiting blood or bleeding gums need emergency care immediately.'},
+    ]
+  },
+  'Typhoid':{
+    causes:[
+      {icon:'ti-droplet',    title:'Contaminated water',   desc:'Drinking water contaminated with Salmonella typhi bacteria is the primary cause'},
+      {icon:'ti-apple',      title:'Unsafe food',          desc:'Eating food prepared in poor hygienic conditions or by infected food handlers'},
+      {icon:'ti-hand-stop',  title:'Poor hand hygiene',    desc:'Not washing hands after using the toilet spreads bacteria to food and surfaces'},
+      {icon:'ti-map',        title:'Endemic region travel',desc:'Travelling to areas with poor sanitation and limited access to clean water'},
+    ],
+    tips:[
+      {icon:'ti-pill',         text:'Complete antibiotic course',    sub:'Take all prescribed antibiotics for the full duration even if you feel better.'},
+      {icon:'ti-droplet',      text:'Drink only clean boiled water', sub:'Avoid tap water, ice and uncooked food until fully recovered.'},
+      {icon:'ti-apple',        text:'Eat soft easily digested food', sub:'Khichdi, dal, bananas and boiled rice are easy on the stomach during recovery.'},
+      {icon:'ti-bed',          text:'Extended rest at home',         sub:'Typhoid recovery takes 2–4 weeks. Avoid work or school throughout this period.'},
+      {icon:'ti-alert-circle', text:'Isolation is important',        sub:'Wash hands thoroughly after toilet use. Typhoid spreads easily through faecal-oral route.'},
+    ]
+  },
+  'Diabetes':{
+    causes:[
+      {icon:'ti-dna',        title:'Insulin deficiency',   desc:'The pancreas does not produce enough insulin or the body cannot use it effectively'},
+      {icon:'ti-salad',      title:'Unhealthy diet',       desc:'High sugar, refined carbs and processed food intake increases blood glucose levels'},
+      {icon:'ti-run-off',    title:'Physical inactivity',  desc:'Sedentary lifestyle reduces insulin sensitivity and promotes weight gain'},
+      {icon:'ti-dna-2',      title:'Genetic factors',      desc:'Family history of diabetes significantly raises the risk of developing the condition'},
+    ],
+    tips:[
+      {icon:'ti-salad',        text:'Follow a low-sugar diet',       sub:'Avoid sugary drinks, white rice and processed foods. Choose whole grains and vegetables.'},
+      {icon:'ti-run',          text:'Exercise 30 min daily',         sub:'Brisk walking, cycling or swimming improves insulin sensitivity and blood sugar control.'},
+      {icon:'ti-activity',     text:'Monitor blood sugar regularly',  sub:'Check fasting and post-meal glucose as advised by your doctor. Keep a log.'},
+      {icon:'ti-pill',         text:'Take medication as prescribed',  sub:'Never skip insulin or oral diabetic medication, even when glucose levels seem normal.'},
+      {icon:'ti-alert-circle', text:'Watch for hypoglycaemia signs',  sub:'Dizziness, sweating and confusion can signal dangerously low blood sugar. Act immediately.'},
+    ]
+  },
+  'Pneumonia':{
+    causes:[
+      {icon:'ti-virus',      title:'Bacterial or viral infection', desc:'Streptococcus pneumoniae bacteria or influenza virus infecting the lung tissue'},
+      {icon:'ti-shield-off', title:'Compromised immune system',    desc:'Elderly, infants and immunocompromised individuals face significantly higher risk'},
+      {icon:'ti-wind',       title:'Inhaling pathogens',           desc:'Breathing in bacteria-containing droplets from coughs and sneezes of infected people'},
+      {icon:'ti-smoking',    title:'Smoking',                      desc:'Smoking damages the cilia lining airways, making lungs more vulnerable to infection'},
+    ],
+    tips:[
+      {icon:'ti-pill',         text:'Complete the full antibiotic course',sub:'Even if symptoms improve after 2–3 days, finishing all antibiotics prevents relapse.'},
+      {icon:'ti-bed',          text:'Rest in a propped-up position', sub:'Sleeping with your head elevated eases breathing and reduces pressure on the lungs.'},
+      {icon:'ti-droplet',      text:'Stay well hydrated',           sub:'Water loosens mucus in the lungs making it easier to cough out.'},
+      {icon:'ti-thermometer',  text:'Monitor temperature and oxygen',sub:'Use a pulse oximeter if available. SpO2 below 94% requires immediate medical attention.'},
+      {icon:'ti-alert-circle', text:'Go to hospital if breathing worsens',sub:'Severe breathlessness or confusion is a medical emergency. Do not delay.'},
+    ]
+  },
+  'Hypertension':{
+    causes:[
+      {icon:'ti-salt',       title:'High sodium diet',      desc:'Excess salt intake causes the body to retain water, raising blood pressure significantly'},
+      {icon:'ti-run-off',    title:'Physical inactivity',   desc:'Sedentary lifestyle weakens the heart and blood vessels over time'},
+      {icon:'ti-brain',      title:'Chronic stress',        desc:'Long-term stress raises adrenaline, which constricts blood vessels and elevates pressure'},
+      {icon:'ti-dna',        title:'Genetic predisposition',desc:'A family history of hypertension greatly increases your own risk'},
+    ],
+    tips:[
+      {icon:'ti-salt',         text:'Reduce salt intake',            sub:'Limit sodium to under 2,300mg daily. Avoid processed, canned and fast foods.'},
+      {icon:'ti-run',          text:'Exercise regularly',            sub:'30 minutes of moderate aerobic activity most days significantly lowers blood pressure.'},
+      {icon:'ti-brain',        text:'Manage stress',                 sub:'Practice meditation, deep breathing or yoga daily to reduce cortisol and adrenaline.'},
+      {icon:'ti-pill',         text:'Take antihypertensive medication',sub:'Never stop blood pressure medication without your doctor\'s guidance — even if readings normalise.'},
+      {icon:'ti-activity',     text:'Monitor BP at home',            sub:'Check blood pressure twice daily and maintain a log to share with your doctor.'},
+    ]
+  },
+};
+
+/* ── Icon map for symptom chips ── */
+const symptomIcons = {
+  fever:'ti-thermometer', high_fever:'ti-thermometer', mild_fever:'ti-thermometer',
+  cough:'ti-wind', fatigue:'ti-zzz', headache:'ti-brain',
+  vomiting:'ti-mood-sick', nausea:'ti-mood-sick',
+  chills:'ti-snowflake', breathlessness:'ti-lungs', chest_pain:'ti-heart',
+  skin_rash:'ti-dots', itching:'ti-hand-off', body_aches:'ti-body-scan',
+  diarrhoea:'ti-drop', sweating:'ti-droplet', joint_pain:'ti-bone',
+  runny_nose:'ti-nose', loss_of_appetite:'ti-salad',
+};
+function symptomIcon(s){
+  for(const k in symptomIcons) if(s.includes(k)) return symptomIcons[k];
+  return 'ti-circle-dot';
+}
+function fmtSymptom(s){ return s.replace(/_/g,' '); }
+
+/* ── Render functions ── */
+let DATA = null;
+let currentModel = 'Random Forest';
+const modelOrder = ['Random Forest','Decision Tree','SVM','Naive Bayes'];
+
+function getKB(disease){
+  for(const key in KB){
+    if(key !== 'default' && disease.toLowerCase().includes(key.toLowerCase())) return KB[key];
+  }
+  return KB.default;
+}
+
+function renderSymptoms(symptoms){
+  const el = document.getElementById('symptom-chips');
+  el.innerHTML = symptoms.map(s =>
+    `<span class="chip"><i class="ti ${symptomIcon(s)}"></i>${fmtSymptom(s)}</span>`
+  ).join('');
+}
+
+function renderModelTabs(){
+  const el = document.getElementById('model-tabs');
+  el.innerHTML = modelOrder.map(m =>
+    `<button class="mtab${m===currentModel?' active':''}" onclick="switchModel('${m}')">${m}</button>`
+  ).join('');
+}
+
+function renderPrediction(){
+  const m = DATA.models[currentModel];
+  if(!m){ return; }
+
+  document.getElementById('dis-name').textContent = m.disease;
+
+  const allSame = Object.values(DATA.models).every(v => v.disease === m.disease);
+  const badge = document.getElementById('agree-badge');
+  if(allSame){
+    badge.className = 'badge badge-green';
+    badge.innerHTML = '<i class="ti ti-check"></i> all 4 models agree';
+  } else {
+    badge.className = 'badge badge-amber';
+    badge.innerHTML = '<i class="ti ti-alert-triangle"></i> models differ';
+  }
+
+  document.getElementById('model-label').textContent = currentModel + ' · ' + m.accuracy + '% accuracy';
+
+  const conf = m.confidence || 0;
+  document.getElementById('conf-val').textContent  = conf.toFixed(1) + '%';
+  document.getElementById('conf-fill').style.width = conf + '%';
+
+  document.getElementById('metrics-grid').innerHTML = [
+    {l:'Accuracy',  v:m.accuracy},
+    {l:'Precision', v:m.precision},
+    {l:'Recall',    v:m.recall},
+    {l:'F1 Score',  v:m.f1},
+  ].map(x => `<div class="mbox"><div class="mval">${x.v}%</div><div class="mlbl">${x.l}</div></div>`).join('');
+
+  const alts = m.alternatives || [];
+  document.getElementById('alt-list').innerHTML = alts.length
+    ? alts.map(a => `
+      <div class="alt-row">
+        <span class="alt-name">${a.disease}</span>
+        <div class="alt-track"><div class="alt-fill" style="width:${Math.min(a.confidence,100)}%"></div></div>
+        <span class="alt-pct">${a.confidence.toFixed(1)}%</span>
+      </div>`).join('')
+    : '<p style="font-size:13px;color:var(--muted)">No significant alternatives detected.</p>';
+
+  const kb = getKB(m.disease);
+  document.getElementById('causes-label').textContent = `Causes of ${m.disease}`;
+  document.getElementById('causes-grid').innerHTML = kb.causes.map(c => `
+    <div class="cause-item">
+      <div class="cause-icon"><i class="ti ${c.icon}"></i></div>
+      <div>
+        <div class="cause-title">${c.title}</div>
+        <div class="cause-desc">${c.desc}</div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('tips-list').innerHTML = kb.tips.map(t => `
+    <div class="tip-item">
+      <i class="ti ${t.icon} tip-icon"></i>
+      <div>
+        <div class="tip-text">${t.text}</div>
+        <div class="tip-sub">${t.sub}</div>
+      </div>
+    </div>`).join('');
+}
+
+function switchModel(name){
+  currentModel = name;
+  renderModelTabs();
+  renderPrediction();
+}
+
+function renderAll(data){
+  DATA = data;
+  const modelNames = Object.keys(data.models);
+  if(modelNames.length > 0) currentModel = modelNames[0];
+
+  const symCount = data.symptoms.length;
+  const topDisease = data.models[currentModel]?.disease || 'Unknown';
+  document.getElementById('header-sub').textContent =
+    `${symCount} symptom${symCount!==1?'s':''} analysed · Predicted: ${topDisease}`;
+
+  renderSymptoms(data.symptoms);
+  renderModelTabs();
+  renderPrediction();
+
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('main-ui').style.display = 'block';
+}
+
+/* ── Load result.json ── */
+fetch('result.json')
+  .then(r => { if(!r.ok) throw new Error('not found'); return r.json(); })
+  .then(data => renderAll(data))
+  .catch(() => {
+    document.getElementById('loading-state').style.display = 'none';
+    document.getElementById('error-state').style.display   = 'block';
+  });
+
+document.getElementById('generate-btn').addEventListener('click', ()=>{
+  const txt = document.getElementById('symptom-input').value;
+  const sel = document.getElementById('symptom-select').value;
+
+  const chips = document.getElementById('symptom-chips');
+
+  if(txt.trim() !== ''){
+    const chip = document.createElement('div');
+    chip.className='chip';
+    chip.innerHTML='<i class="ti ti-activity-heartbeat"></i>'+txt;
+    chips.appendChild(chip);
+  }
+
+  if(sel.trim() !== ''){
+    const chip2 = document.createElement('div');
+    chip2.className='chip';
+    chip2.innerHTML='<i class="ti ti-stethoscope"></i>'+sel;
+    chips.appendChild(chip2);
+  }
+
+  document.querySelector('#main-ui').scrollIntoView({behavior:'smooth'});
+});
+
+</script>
+</body>
+</html>
