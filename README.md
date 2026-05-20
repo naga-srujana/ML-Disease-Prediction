@@ -77,9 +77,6 @@ Then open `http://localhost:8000`
 
 ## 👨‍💻 Author
 
-**[Your Name]**
-Passionate about Artificial Intelligence · Machine Learning · Data Science · Real-world Problem Solving
+**Naga Srujana**
 
 ---
-
-⭐ If you found this useful, give it a star on GitHub!
